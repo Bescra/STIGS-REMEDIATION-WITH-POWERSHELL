@@ -1,0 +1,67 @@
+<#
+.SYNOPSIS
+    This PowerShell script ensures that printing over HTTP is disabled to comply with
+    Windows 11 STIG requirement WN11-CC-000110.
+
+.NOTES
+    Author          : Rubem Tavares
+    LinkedIn        : linkedin.com/in/rubem-tavares-77900a258
+    GitHub          : github.com/Bescra
+    Date Created    : 14 Mar 2026
+    Last Modified   : 14 Mar 2026
+    Version         : 1.0
+    CVEs            : N/A
+    Plugin IDs      : N/A
+    STIG-ID         : WN11-CC-000110
+
+.TESTED ON
+    Date(s) Tested  :
+    Tested By       :
+    Systems Tested  :
+    PowerShell Ver. :
+
+.USAGE
+    This script remediates the STIG finding by ensuring the registry value:
+    HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Printers\DisableHTTPPrinting
+    is set to 1.
+
+    Example syntax:
+    PS C:\> .\remediation_WN11-CC-000110.ps1
+#>
+
+$RegistryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Printers"
+$ValueName = "DisableHTTPPrinting"
+$ExpectedValue = 1
+
+Write-Host "Checking compliance for WN11-CC-000110..."
+
+# Ensure registry path exists
+if (!(Test-Path $RegistryPath)) {
+    Write-Host "Registry path missing. Creating..."
+    New-Item -Path $RegistryPath -Force | Out-Null
+}
+
+# Get current value
+$currentValue = (Get-ItemProperty -Path $RegistryPath -Name $ValueName -ErrorAction SilentlyContinue).$ValueName
+
+# Apply remediation if necessary
+if ($null -eq $currentValue -or $currentValue -ne $ExpectedValue) {
+
+    Write-Host "System non-compliant. Applying remediation..."
+
+    New-ItemProperty `
+        -Path $RegistryPath `
+        -Name $ValueName `
+        -Value $ExpectedValue `
+        -PropertyType DWORD `
+        -Force | Out-Null
+
+    Write-Host "Remediation complete."
+}
+else {
+    Write-Host "System already compliant."
+}
+
+# Verification
+$finalValue = (Get-ItemProperty -Path $RegistryPath -Name $ValueName).$ValueName
+Write-Host "Configured value: $finalValue"
